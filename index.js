@@ -66,7 +66,7 @@ fastify.post('/api/users', {
 
 const start = async () => {
   try {
-    await fastify.listen(3000)
+    await fastify.listen(process.env.PORT || 3000)
     console.log(
       `Server listening on: http://${fastify.server.address().address}:${
         fastify.server.address().port
