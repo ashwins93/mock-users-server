@@ -1,12 +1,15 @@
-require('dotenv').config()
+require('dotenv').config();
 
-const fastify = require('fastify')({ logger: true })
-const Datastore = require('nedb')
-const db = new Datastore()
-const jwt = require('jsonwebtoken')
-const cors = require('cors')
+const fastify = require('fastify')({ logger: true });
+const Datastore = require('nedb');
+const db = new Datastore();
+const jwt = require('fastify-jwt');
+const cors = require('cors');
 
-fastify.use(cors())
+fastify.use(cors());
+fastify.register(jwt, {
+  secret: process.env.SECRET
+});
 
 fastify.post('/api/auth', {
   schema: {
@@ -14,40 +17,57 @@ fastify.post('/api/auth', {
       type: 'object',
       properties: {
         email: { type: 'string' },
-        password: { type: 'string' },
+        password: { type: 'string' }
       },
-      required: ['email', 'password'],
+      required: ['email', 'password']
     },
     response: {
       200: {
         type: 'object',
         properties: {
           message: { type: 'string' },
-          token: { type: 'string' },
-        },
-      },
-    },
+          token: { type: 'string' }
+        }
+      }
+    }
   },
   handler: (req, res) => {
-    jwt.sign(
+    res.jwtSign(
       {
-        email: req.body.email,
+        email: req.body.email
       },
-      process.env.SECRET,
-      { expiresIn: '1h' },
       (err, token) => {
-        if (err) {
-          console.log(err)
-          return res.status(500).send({ message: 'Something went wrong' })
-        }
-        res.send({
-          message: 'Authenticated Successfully!',
-          token,
-        })
+        if (err) return res.status(500).send(err);
+
+        res.send({ message: 'Authenticated successfully', token });
       }
-    )
+    );
+  }
+});
+
+fastify.get('/api/protected', {
+  schema: {
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' }
+        }
+      }
+    }
   },
-})
+  handler: (req, res) => {
+    req.jwtVerify((err, decoded) => {
+      if (err) {
+        return res
+          .status(403)
+          .send({ message: 'Invalid token. You are not permitted to view.' });
+      }
+
+      res.send({ message: `Your email ID is ${decoded.email}` });
+    });
+  }
+});
 
 fastify.get('/api/users', {
   schema: {
@@ -58,23 +78,23 @@ fastify.get('/api/users', {
           type: 'object',
           properties: {
             firstName: { type: 'string' },
-            lastName: { type: 'string' },
-          },
-        },
-      },
-    },
+            lastName: { type: 'string' }
+          }
+        }
+      }
+    }
   },
   handler: (req, res) => {
     db.find({}, (err, docs) => {
       if (err) {
-        console.log(err)
-        return res.send(err)
+        console.log(err);
+        return res.send(err);
       }
-      console.log(docs)
-      res.send(docs)
-    })
-  },
-})
+      console.log(docs);
+      res.send(docs);
+    });
+  }
+});
 
 fastify.post('/api/users', {
   schema: {
@@ -82,45 +102,45 @@ fastify.post('/api/users', {
       type: 'object',
       properties: {
         firstName: { type: 'string' },
-        lastName: { type: 'string' },
+        lastName: { type: 'string' }
       },
-      required: ['firstName', 'lastName'],
+      required: ['firstName', 'lastName']
     },
     response: {
       200: {
         type: 'object',
         properties: {
           firstName: { type: 'string' },
-          lastName: { type: 'string' },
-        },
-      },
-    },
+          lastName: { type: 'string' }
+        }
+      }
+    }
   },
   handler: (req, res) => {
-    console.log(req.body)
+    console.log(req.body);
     db.insert(req.body, (err, doc) => {
       if (err) {
-        console.log(err)
-        return res.status(500).send(err)
+        console.log(err);
+        return res.status(500).send(err);
       }
-      console.log('done')
-      res.send(doc)
-    })
-  },
-})
+      console.log('done');
+      res.send(doc);
+    });
+  }
+});
 
 const start = async () => {
   try {
-    await fastify.listen(process.env.PORT || 3000, '0.0.0.0')
+    await fastify.listen(process.env.PORT || 3000, '0.0.0.0');
     console.log(
       `Server listening on: http://${fastify.server.address().address}:${
         fastify.server.address().port
       }`
-    )
+    );
   } catch (err) {
-    console.log(err)
-    process.exit(1)
+    console.log(err);
+    process.exit(1);
   }
-}
+};
 
-start()
+start();
