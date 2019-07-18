@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ashwins93/mock-users-server.git"
@@ -16,8 +19,11 @@
   },
   "homepage": "https://github.com/ashwins93/mock-users-server#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "fastify": "^2.6.0",
+    "fastify-jwt": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
     "nedb": "^1.8.0"
   },
   "devDependencies": {

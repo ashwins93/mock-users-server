@@ -3,6 +3,51 @@ require('dotenv').config()
 const fastify = require('fastify')({ logger: true })
 const Datastore = require('nedb')
 const db = new Datastore()
+const jwt = require('jsonwebtoken')
+const cors = require('cors')
+
+fastify.use(cors())
+
+fastify.post('/api/auth', {
+  schema: {
+    body: {
+      type: 'object',
+      properties: {
+        email: { type: 'string' },
+        password: { type: 'string' },
+      },
+      required: ['email', 'password'],
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+          token: { type: 'string' },
+        },
+      },
+    },
+  },
+  handler: (req, res) => {
+    jwt.sign(
+      {
+        email: req.body.email,
+      },
+      process.env.SECRET,
+      { expiresIn: '1h' },
+      (err, token) => {
+        if (err) {
+          console.log(err)
+          return res.status(500).send({ message: 'Something went wrong' })
+        }
+        res.send({
+          message: 'Authenticated Successfully!',
+          token,
+        })
+      }
+    )
+  },
+})
 
 fastify.get('/api/users', {
   schema: {
